@@ -1,0 +1,48 @@
+name: Pin Nix Release Binaries
+description: >-
+  Pin the binaries a GitHub release published in a lock file, so a flake
+  installs them with lib.mkReleaseBinary instead of building from source.
+author: nixos-contrib
+
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  tag:
+    description: Tag of the release. Its version is the tag without a leading "v".
+    required: true
+  repository:
+    description: owner/name of the repository that published the release.
+    default: ${{ github.repository }}
+  lock-file:
+    description: Path of the lock file to write, relative to working-directory.
+    default: nix/release.json
+  working-directory:
+    description: Directory the lock file path is relative to.
+    default: .
+  token:
+    description: Token to read the release with.
+    default: ${{ github.token }}
+
+outputs:
+  updated:
+    description: '"true" when the lock file changed, otherwise "false".'
+    value: ${{ steps.pin.outputs.updated }}
+  version:
+    description: Version written in the lock file.
+    value: ${{ steps.pin.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Pin release binaries
+      id: pin
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        TAG: ${{ inputs.tag }}
+        REPOSITORY: ${{ inputs.repository }}
+        LOCK_FILE: ${{ inputs.lock-file }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: "$GITHUB_ACTION_PATH/nix-release-bin.sh"

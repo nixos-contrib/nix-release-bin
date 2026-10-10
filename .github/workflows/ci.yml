@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Run ShellCheck
+        run: nix develop --command shellcheck nix-release-bin.sh tests/test.sh
+
+      - name: Run actionlint
+        run: nix develop --command actionlint
+
+  # Checks fetch and run the release binary tests/fixture/lock.json pins for
+  # each of these systems.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Run Tests
+        run: nix develop --command tests/test.sh
+
+      - name: Run Flake Checks
+        run: nix flake check -L
+
+  # Runs the action itself, as a caller would -- with the runner's own tools
+  # rather than the dev shell -- against the release tests/fixture/lock.json
+  # pins.
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Pin release binaries
+        id: pin
+        uses: ./
+        with:
+          tag: v0.2.0
+          repository: protoc-contrib/protoc-gen-go-aip
+          working-directory: ${{ runner.temp }}
+
+      - name: Check the lock file
+        env:
+          UPDATED: ${{ steps.pin.outputs.updated }}
+          VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          test "$UPDATED" = true
+          test "$VERSION" = 0.2.0
+          diff tests/fixture/lock.json "$RUNNER_TEMP/nix/release.json"
+
+  release:
+    needs: [lint, test, action]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create Release PR
+        id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          manifest-file: .github/config/release-please-manifest.json
+          config-file: .github/config/release-please-config.json
+          target-branch: main
+
+      # Callers pin the major version, e.g. @v1, so it follows every release.
+      - name: Move the major version tag
+        if: steps.release.outputs.release_created
+        env:
+          TAG: ${{ steps.release.outputs.tag_name }}
+          MAJOR: v${{ steps.release.outputs.major }}
+        run: |
+          git fetch --tags --quiet
+          git tag --force "$MAJOR" "$TAG"
+          git push --force origin "refs/tags/$MAJOR"
