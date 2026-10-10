@@ -1,7 +1,7 @@
 name: Pin Nix Release Binaries
 description: >-
   Pin the binaries a GitHub release published in a lock file, so a flake
-  installs them with lib.mkReleaseBinary instead of building from source.
+  installs them with lib.mkReleaseBin instead of building from source.
 author: nixos-contrib
 
 branding:

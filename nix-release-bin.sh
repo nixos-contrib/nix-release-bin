@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pins the binaries a GitHub release published in the lock file
-# lib.mkReleaseBinary reads, so a flake can install them instead of building
+# lib.mkReleaseBin reads, so a flake can install them instead of building
 # from source.
 #
 # Every asset whose name ends in a Nix system, as example-app-x86_64-linux

@@ -13,13 +13,13 @@
       ...
     }:
     {
-      lib.mkReleaseBinary = import ./lib.nix;
+      lib.mkReleaseBin = import ./lib.nix;
     }
     // flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        mkReleaseBinary = import ./lib.nix;
+        mkReleaseBin = import ./lib.nix;
         # A real release, which the binary check fetches.
         lock = ./tests/fixture/protoc-gen-go-aip.json;
         fallback = pkgs.writeShellScriptBin "fallback" "" // {
@@ -30,7 +30,7 @@
         failures = pkgs.lib.runTests {
           testFallsBackWithoutABinary = {
             expr =
-              (mkReleaseBinary {
+              (mkReleaseBin {
                 inherit pkgs fallback;
                 pname = "example-app";
                 lock = {
@@ -43,7 +43,7 @@
           testFailsWithoutABinaryOrFallback = {
             expr =
               (builtins.tryEval
-                (mkReleaseBinary {
+                (mkReleaseBin {
                   inherit pkgs;
                   pname = "example-app";
                   lock = {
@@ -57,7 +57,7 @@
           testPackagesTheBinary = {
             expr =
               let
-                binary = mkReleaseBinary {
+                binary = mkReleaseBin {
                   inherit pkgs fallback;
                   pname = "example-app";
                   lock = {
@@ -96,7 +96,7 @@
         // pkgs.lib.optionalAttrs pinned {
           binary =
             let
-              binary = mkReleaseBinary {
+              binary = mkReleaseBin {
                 inherit pkgs lock;
                 pname = "protoc-gen-go-aip";
               };

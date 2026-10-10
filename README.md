@@ -12,7 +12,7 @@ project's releases already ship a binary per system. Nix only fetches what it
 has a hash for, so installing those binaries means pinning a hash per system
 on every release. This repository does both halves:
 
-- **`lib.mkReleaseBinary`** packages the pinned binary for the host system, or
+- **`lib.mkReleaseBin`** packages the pinned binary for the host system, or
   returns the fallback where the release has none.
 - **The action** writes the lock file it reads, after a release is published.
 
@@ -74,7 +74,7 @@ libraries, as Go and Rust binaries for Linux and macOS usually are.
       in
       {
         packages = {
-          default = nix-release-bin.lib.mkReleaseBinary {
+          default = nix-release-bin.lib.mkReleaseBin {
             inherit pkgs;
             lock = ./nix/release.json;
             pname = "example-app";
