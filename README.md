@@ -76,7 +76,7 @@ libraries, as Go and Rust binaries for Linux and macOS usually are.
         packages = {
           default = nix-release-bin.lib.mkReleaseBin {
             inherit pkgs;
-            lock = ./nix/release.json;
+            lock = ./.nix-release-bin.json;
             pname = "example-app";
             fallback = source;
           };
@@ -150,7 +150,7 @@ personal access token.
 |---|---|---|
 | `tag` | | Tag of the release. Its version is the tag without a leading `v`. |
 | `repository` | `${{ github.repository }}` | `owner/name` of the repository that published the release. |
-| `lock-file` | `nix/release.json` | Path of the lock file to write, relative to `working-directory`. |
+| `lock-file` | `.nix-release-bin.json` | Path of the lock file to write, relative to `working-directory`. |
 | `working-directory` | `.` | Directory the lock file path is relative to. |
 | `token` | `${{ github.token }}` | Token to read the release with. |
 

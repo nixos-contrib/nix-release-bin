@@ -77,7 +77,7 @@ jobs:
         run: |
           test "$UPDATED" = true
           test "$VERSION" = 0.2.0
-          diff tests/fixture/protoc-gen-go-aip.json "$RUNNER_TEMP/nix/release.json"
+          diff tests/fixture/protoc-gen-go-aip.json "$RUNNER_TEMP/.nix-release-bin.json"
 
   release:
     needs: [lint, test, action]

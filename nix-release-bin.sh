@@ -21,7 +21,7 @@ set -euo pipefail
 
 : "${TAG:?TAG must name the release}"
 : "${REPOSITORY:?REPOSITORY must name the repository, as owner/name}"
-LOCK_FILE=${LOCK_FILE:-nix/release.json}
+LOCK_FILE=${LOCK_FILE:-.nix-release-bin.json}
 
 # The systems Nix builds for that release binaries are published for.
 SYSTEM='-(?<system>(aarch64|x86_64|i686|armv6l|armv7l|riscv64|powerpc64le)-(linux|darwin))$'

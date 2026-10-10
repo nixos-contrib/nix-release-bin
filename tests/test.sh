@@ -75,15 +75,14 @@ test_pins_the_release_binaries() {
   setup
   run
   expect "success" test "$status" -eq 0
-  expect "the fixture lock" diff "$fixture/lock.json" nix/release.json
+  expect "the fixture lock" diff "$fixture/lock.json" .nix-release-bin.json
   expect "updated=true" test "$(output_of updated)" = true
   expect "version=0.2.0" test "$(output_of version)" = 0.2.0
 }
 
 test_leaves_a_current_lock_alone() {
   setup
-  mkdir nix
-  cp "$fixture/lock.json" nix/release.json
+  cp "$fixture/lock.json" .nix-release-bin.json
   run
   expect "success" test "$status" -eq 0
   expect "updated=false" test "$(output_of updated)" = false
@@ -101,7 +100,7 @@ test_fails_without_a_binary() {
   run
   expect "failure" test "$status" -ne 0
   expect "the reason" contains "$log" "no asset whose name ends in a system"
-  expect "no lock file" test ! -e nix/release.json
+  expect "no lock file" test ! -e .nix-release-bin.json
 }
 
 test_fails_without_a_digest() {
@@ -109,7 +108,7 @@ test_fails_without_a_digest() {
   run
   expect "failure" test "$status" -ne 0
   expect "the reason" contains "$log" "no SHA-256 digest for example-app-aarch64-darwin"
-  expect "no lock file" test ! -e nix/release.json
+  expect "no lock file" test ! -e .nix-release-bin.json
 }
 
 test_fails_on_two_binaries_for_a_system() {

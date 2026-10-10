@@ -17,7 +17,7 @@ inputs:
     default: ${{ github.repository }}
   lock-file:
     description: Path of the lock file to write, relative to working-directory.
-    default: nix/release.json
+    default: .nix-release-bin.json
   working-directory:
     description: Directory the lock file path is relative to.
     default: .
