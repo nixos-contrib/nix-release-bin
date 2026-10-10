@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs nix-release-bin.sh against tests/fixture/release.json, served by a
-# gh stub, and checks the manifest it wrote.
+# gh stub, and checks the manifest it wrote. Also installs a binary through
+# lib.nix, which needs Nix.
 #
 # Usage: tests/test.sh [test_name...]
 
@@ -131,6 +132,41 @@ test_fails_on_two_binaries_for_a_system() {
   run
   expect "failure" test "$status" -ne 0
   expect "the reason" contains "$log" "more than one binary for aarch64-darwin"
+}
+
+# A binary built with the nixpkgs that installs it refers to libraries the
+# fetcher depends on too, such as glibc, so a fixed-output derivation
+# fetching it fails.
+test_installs_a_binary_built_with_the_same_nixpkgs() {
+  local serve=$scratch/$name/serve nixpkgs binary port manifest package
+  mkdir -p "$serve"
+  log=$scratch/$name.log
+  nixpkgs="(builtins.getFlake \"path:$root\").inputs.nixpkgs.legacyPackages.\${builtins.currentSystem}"
+  binary=$(nix build --impure --no-link --print-out-paths --expr "$nixpkgs.hello" 2>"$log") || true
+  expect "hello to build" test -n "$binary"
+  cp "$binary/bin/hello" "$serve/hello"
+
+  python3 -u -m http.server 0 --bind 127.0.0.1 --directory "$serve" >"$scratch/$name.server" 2>&1 &
+  server=$!
+  trap 'kill "$server"' EXIT
+  for _ in $(seq 50); do
+    port=$(sed -n 's/.* port \([0-9]*\).*/\1/p' "$scratch/$name.server")
+    [ -n "$port" ] && break
+    sleep 0.1
+  done
+  expect "the server to start" test -n "$port"
+
+  manifest=$(jq -nc --arg url "http://127.0.0.1:$port/hello" --arg hash "$(nix hash file "$serve/hello")" \
+    --arg system "$(nix eval --impure --raw --expr builtins.currentSystem)" \
+    '{version: "1.0.0", assets: {($system): {$url, $hash}}}')
+  package=$(nix build --impure --no-link --print-out-paths --expr "
+    import $root/lib.nix {
+      pkgs = $nixpkgs;
+      manifest = builtins.fromJSON ''$manifest'';
+      pname = \"hello\";
+    }" 2>>"$log") || true
+  expect "the binary to install" test -n "$package"
+  expect "the binary to run" test "$("$package/bin/hello")" = "Hello, world!"
 }
 
 # Each test runs in its own process, so set -e and cd stay contained.
