@@ -16,6 +16,7 @@ let
   release = if builtins.isAttrs manifest then manifest else builtins.fromJSON (builtins.readFile manifest);
   system = pkgs.stdenv.hostPlatform.system;
   asset = release.assets.${system} or null;
+  isLinux = pkgs.stdenv.hostPlatform.isLinux;
 in
 if asset == null then
   if fallback != null then
@@ -23,14 +24,20 @@ if asset == null then
   else
     throw "${pname} ${release.version} has no release binary for ${system}"
 else
-  pkgs.stdenvNoCC.mkDerivation {
+  pkgs.stdenv.mkDerivation {
     inherit pname;
     inherit (release) version;
     src = pkgs.fetchurl { inherit (asset) url hash; };
     dontUnpack = true;
-    # Stripping or patching would invalidate the ad-hoc signature Go and Rust
-    # give darwin binaries, so the binary is installed as published.
-    dontFixup = true;
+    # A dynamically linked Linux binary Nix built loads the glibc of the store
+    # it was built in, which the host's store does not hold, so it is pointed
+    # at this one's instead. Static binaries are left alone.
+    nativeBuildInputs = pkgs.lib.optionals isLinux [ pkgs.autoPatchelfHook ];
+    buildInputs = pkgs.lib.optionals isLinux [ pkgs.stdenv.cc.cc.lib ];
+    dontStrip = true;
+    # Patching would invalidate the ad-hoc signature Go and Rust give darwin
+    # binaries, so those are installed as published.
+    dontFixup = !isLinux;
     installPhase = ''
       install -Dm0755 "$src" "$out/bin/${pname}"
     '';

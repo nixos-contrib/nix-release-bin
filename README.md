@@ -44,9 +44,11 @@ The run fails when the release has no binary for any system, when two assets
 are binaries for the same system, or when an asset has no digest: GitHub
 records none for assets uploaded before June 2025.
 
-Binaries are installed as published, without stripping or patching, so they
-must run outside Nix: statically linked, or linked only against system
-libraries, as Go and Rust binaries for Linux and macOS usually are.
+A Linux binary that Nix built and linked dynamically loads glibc from the
+store it was built in, which other machines do not have, so its interpreter
+and libraries are pointed at the nixpkgs passed in, as nixpkgs does for its
+`-bin` packages. Static binaries, and every macOS binary, are installed as
+published: patching a macOS binary would invalidate its ad-hoc signature.
 
 ## Usage
 
@@ -171,8 +173,9 @@ the repository in its devcontainer, which installs Nix.
 
 `tests/test.sh` runs the script against `tests/fixture/release.json`, served
 by a `gh` stub. The flake checks test `lib.nix`, and fetch and run the
-binary of a real release, pinned in `tests/fixture/protoc-gen-go-aip.json`,
-for the host system:
+binaries of two real releases for the host system: one static, pinned in
+`tests/fixture/protoc-gen-go-aip.json`, and one dynamically linked, pinned in
+`tests/fixture/protoc-gen-rust-aip.json`:
 
 ```sh
 nix develop --command tests/test.sh                                # every test

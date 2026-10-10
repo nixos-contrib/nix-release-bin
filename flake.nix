@@ -20,12 +20,18 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         mkReleaseBin = import ./lib.nix;
-        # A real release, which the binary check fetches.
-        manifest = ./tests/fixture/protoc-gen-go-aip.json;
         fallback = pkgs.writeShellScriptBin "fallback" "" // {
           meta.description = "fallback";
         };
-        pinned = builtins.hasAttr system (builtins.fromJSON (builtins.readFile manifest)).assets;
+        # Real releases, which the binary checks fetch and run: one whose Linux
+        # binary is static, and one whose Linux binary loads glibc and libgcc.
+        releases = [
+          "protoc-gen-go-aip"
+          "protoc-gen-rust-aip"
+        ];
+        pinned =
+          name:
+          builtins.hasAttr system (builtins.fromJSON (builtins.readFile ./tests/fixture/${name}.json)).assets;
 
         failures = pkgs.lib.runTests {
           testFallsBackWithoutABinary = {
@@ -92,20 +98,23 @@
             else
               throw "lib.nix tests failed: ${builtins.toJSON failures}";
         }
-        # Fetches and runs a real release binary where the fixture pins one.
-        // pkgs.lib.optionalAttrs pinned {
-          binary =
-            let
-              binary = mkReleaseBin {
-                inherit pkgs manifest;
-                pname = "protoc-gen-go-aip";
-              };
-            in
-            pkgs.runCommand "binary-test" { } ''
-              ${pkgs.lib.getExe binary} </dev/null >/dev/null
-              touch $out
-            '';
-        };
+        // builtins.listToAttrs (
+          map (name: {
+            name = "binary-${name}";
+            value =
+              let
+                binary = mkReleaseBin {
+                  inherit pkgs;
+                  manifest = ./tests/fixture/${name}.json;
+                  pname = name;
+                };
+              in
+              pkgs.runCommand "binary-test-${name}" { } ''
+                ${pkgs.lib.getExe binary} </dev/null >/dev/null
+                touch $out
+              '';
+          }) (builtins.filter pinned releases)
+        );
 
         devShells.default = pkgs.mkShell {
           name = "nix-release-bin";
