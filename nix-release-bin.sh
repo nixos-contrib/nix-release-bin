@@ -4,9 +4,11 @@
 # from source.
 #
 # Every asset whose name ends in a Nix system, as example-app-x86_64-linux
-# does, is written with its download URL and the SHA-256 digest GitHub
-# recorded on upload, so nothing is downloaded. Other assets, such as
-# checksums or archives, are skipped.
+# does, or in the Rust target triple of one, as
+# example-app-x86_64-unknown-linux-musl does, is written under that system
+# with its download URL and the SHA-256 digest GitHub recorded on upload, so
+# nothing is downloaded. Other assets, such as checksums or archives, are
+# skipped.
 #
 # Kept to bash 3.2, the /bin/bash macOS runners ship. Needs gh, jq and perl,
 # which GitHub-hosted runners carry.
@@ -23,15 +25,19 @@ set -euo pipefail
 : "${REPOSITORY:?REPOSITORY must name the repository, as owner/name}"
 MANIFEST_FILE=${MANIFEST_FILE:-.nix-release-bin-manifest.json}
 
-# The systems Nix builds for that release binaries are published for.
-SYSTEM='-(?<system>(aarch64|x86_64|i686|armv6l|armv7l|riscv64|powerpc64le)-(linux|darwin))$'
+# The systems Nix builds for that release binaries are published for, as Nix
+# names them or as a Rust target triple does: apple-darwin for darwin, and
+# unknown-linux-gnu or unknown-linux-musl for linux.
+SYSTEM='-(?<arch>aarch64|x86_64|i686|armv6l|armv7l|riscv64|powerpc64le)-(?<os>linux|darwin|apple-darwin|unknown-linux-gnu|unknown-linux-musl)$'
 
 release=$(gh api "repos/$REPOSITORY/releases/tags/$TAG")
 
 assets=$(
   printf '%s' "$release" | jq -r --arg system "$SYSTEM" '
     .assets[] | select(.name | test($system))
-    | [(.name | capture($system).system), .name, .browser_download_url, (.digest // "")]
+    | (.name | capture($system)) as $match
+    | ($match.os | sub("^apple-"; "") | sub("^unknown-linux-.*"; "linux")) as $os
+    | ["\($match.arch)-\($os)", .name, .browser_download_url, (.digest // "")]
     | @tsv
   '
 )

@@ -80,6 +80,21 @@ test_pins_the_release_binaries() {
   expect "version=0.2.0" test "$(output_of version)" = 0.2.0
 }
 
+test_pins_rust_target_triples() {
+  setup "$(release_with '.assets |= map(.name |= sub("-aarch64-darwin$"; "-aarch64-apple-darwin") | .name |= sub("-x86_64-linux$"; "-x86_64-unknown-linux-musl"))')"
+  run
+  expect "success" test "$status" -eq 0
+  expect "the systems" test "$(jq -r '.assets | keys | join(" ")' .nix-release-bin-manifest.json)" = "aarch64-darwin x86_64-linux"
+  expect "the hashes" test "$(jq -c '[.assets[].hash]' .nix-release-bin-manifest.json)" = "$(jq -c '[.assets[].hash]' "$fixture/manifest.json")"
+}
+
+test_fails_on_gnu_and_musl_binaries_for_a_system() {
+  setup "$(release_with '.assets += [.assets[1] | .name = "example-app-x86_64-unknown-linux-gnu"] | .assets[1].name = "example-app-x86_64-unknown-linux-musl"')"
+  run
+  expect "failure" test "$status" -ne 0
+  expect "the reason" contains "$log" "more than one binary for x86_64-linux"
+}
+
 test_leaves_a_current_manifest_alone() {
   setup
   cp "$fixture/manifest.json" .nix-release-bin-manifest.json

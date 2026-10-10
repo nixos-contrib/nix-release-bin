@@ -20,9 +20,11 @@ on every release. This repository does both halves:
 
 The action reads the release from the GitHub API. Every asset whose name ends
 in a Nix system, such as `example-app-x86_64-linux` or
-`example-app-aarch64-darwin`, is written to the manifest with its download
-URL and the SHA-256 digest GitHub recorded when it was uploaded, so nothing is
-downloaded. Other assets, such as checksums or archives, are skipped.
+`example-app-aarch64-darwin`, or in the Rust target triple of one, such as
+`example-app-x86_64-unknown-linux-musl` or `example-app-aarch64-apple-darwin`,
+is written to the manifest under that system, with its download URL and the
+SHA-256 digest GitHub recorded when it was uploaded, so nothing is downloaded.
+Other assets, such as checksums or archives, are skipped.
 
 ```json
 {
