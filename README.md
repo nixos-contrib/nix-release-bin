@@ -19,8 +19,8 @@ on every release. This repository does both halves:
 ## How it works
 
 The action reads the release from the GitHub API. Every asset whose name ends
-in a Nix system, such as `protoc-gen-foo-x86_64-linux` or
-`protoc-gen-foo-aarch64-darwin`, is written to the lock file with its download
+in a Nix system, such as `example-app-x86_64-linux` or
+`example-app-aarch64-darwin`, is written to the lock file with its download
 URL and the SHA-256 digest GitHub recorded when it was uploaded, so nothing is
 downloaded. Other assets, such as checksums or archives, are skipped.
 
@@ -29,7 +29,7 @@ downloaded. Other assets, such as checksums or archives, are skipped.
   "assets": {
     "aarch64-darwin": {
       "hash": "sha256-+AQjITG+6afzGz0cwTx2fsm10Q9a7gK9EVOpTtiRSrg=",
-      "url": "https://github.com/protoc-contrib/protoc-gen-go-aip/releases/download/v0.2.0/protoc-gen-go-aip-aarch64-darwin"
+      "url": "https://github.com/example/example-app/releases/download/v0.2.0/example-app-aarch64-darwin"
     }
   },
   "version": "0.2.0"
@@ -70,14 +70,14 @@ libraries, as Go and Rust binaries for Linux and macOS usually are.
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        source = pkgs.buildGoModule { pname = "protoc-gen-foo"; /* ... */ };
+        source = pkgs.buildGoModule { pname = "example-app"; /* ... */ };
       in
       {
         packages = {
           default = nix-release-bin.lib.mkReleaseBinary {
             inherit pkgs;
             lock = ./nix/release.json;
-            pname = "protoc-gen-foo";
+            pname = "example-app";
             fallback = source;
           };
           inherit source;
@@ -170,8 +170,9 @@ The dev shell carries the tools CI uses. Enter it with `nix develop`, or open
 the repository in its devcontainer, which installs Nix.
 
 `tests/test.sh` runs the script against `tests/fixture/release.json`, served
-by a `gh` stub. The flake checks test `lib.nix`, and fetch and run the binary
-`tests/fixture/lock.json` pins for the host system:
+by a `gh` stub. The flake checks test `lib.nix`, and fetch and run the
+binary of a real release, pinned in `tests/fixture/protoc-gen-go-aip.json`,
+for the host system:
 
 ```sh
 nix develop --command tests/test.sh                                # every test

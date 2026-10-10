@@ -16,7 +16,7 @@ stub_gh() {
   mkdir -p "$scratch/$name/bin"
   cat >"$scratch/$name/bin/gh" <<'EOF'
 #!/usr/bin/env bash
-[ "$1 $2" = "api repos/protoc-contrib/protoc-gen-go-aip/releases/tags/v0.2.0" ] || exit 1
+[ "$1 $2" = "api repos/example/example-app/releases/tags/v0.2.0" ] || exit 1
 cat "$RELEASE"
 EOF
   chmod +x "$scratch/$name/bin/gh"
@@ -47,7 +47,7 @@ run() {
   : >"$output"
   set +e
   env PATH="$scratch/$name/bin:$PATH" RELEASE="$release" GITHUB_OUTPUT="$output" \
-    TAG=v0.2.0 REPOSITORY=protoc-contrib/protoc-gen-go-aip "$@" "$script" >"$log" 2>&1
+    TAG=v0.2.0 REPOSITORY=example/example-app "$@" "$script" >"$log" 2>&1
   status=$?
   set -e
 }
@@ -108,7 +108,7 @@ test_fails_without_a_digest() {
   setup "$(release_with '.assets[0].digest = null')"
   run
   expect "failure" test "$status" -ne 0
-  expect "the reason" contains "$log" "no SHA-256 digest for protoc-gen-go-aip-aarch64-darwin"
+  expect "the reason" contains "$log" "no SHA-256 digest for example-app-aarch64-darwin"
   expect "no lock file" test ! -e nix/release.json
 }
 

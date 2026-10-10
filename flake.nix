@@ -20,7 +20,8 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         mkReleaseBinary = import ./lib.nix;
-        lock = ./tests/fixture/lock.json;
+        # A real release, which the binary check fetches.
+        lock = ./tests/fixture/protoc-gen-go-aip.json;
         fallback = pkgs.writeShellScriptBin "fallback" "" // {
           meta.description = "fallback";
         };
@@ -31,7 +32,7 @@
             expr =
               (mkReleaseBinary {
                 inherit pkgs fallback;
-                pname = "protoc-gen-go-aip";
+                pname = "example-app";
                 lock = {
                   version = "1.0.0";
                   assets = { };
@@ -44,7 +45,7 @@
               (builtins.tryEval
                 (mkReleaseBinary {
                   inherit pkgs;
-                  pname = "protoc-gen-go-aip";
+                  pname = "example-app";
                   lock = {
                     version = "1.0.0";
                     assets = { };
@@ -58,11 +59,11 @@
               let
                 binary = mkReleaseBinary {
                   inherit pkgs fallback;
-                  pname = "protoc-gen-go-aip";
+                  pname = "example-app";
                   lock = {
                     version = "1.0.0";
                     assets.${system} = {
-                      url = "https://example.com/protoc-gen-go-aip-${system}";
+                      url = "https://example.com/example-app-${system}";
                       hash = pkgs.lib.fakeHash;
                     };
                   };
@@ -74,11 +75,11 @@
                 url = builtins.head binary.src.urls;
               };
             expected = {
-              name = "protoc-gen-go-aip-1.0.0";
+              name = "example-app-1.0.0";
               description = "fallback";
-              mainProgram = "protoc-gen-go-aip";
+              mainProgram = "example-app";
               platforms = [ system ];
-              url = "https://example.com/protoc-gen-go-aip-${system}";
+              url = "https://example.com/example-app-${system}";
             };
           };
         };

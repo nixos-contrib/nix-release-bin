@@ -2,18 +2,18 @@
   "tag_name": "v0.2.0",
   "assets": [
     {
-      "name": "protoc-gen-go-aip-aarch64-darwin",
-      "browser_download_url": "https://github.com/protoc-contrib/protoc-gen-go-aip/releases/download/v0.2.0/protoc-gen-go-aip-aarch64-darwin",
+      "name": "example-app-aarch64-darwin",
+      "browser_download_url": "https://github.com/example/example-app/releases/download/v0.2.0/example-app-aarch64-darwin",
       "digest": "sha256:f804232131bee9a7f31b3d1cc13c767ec9b5d10f5aee02bd1153a94ed8914ab8"
     },
     {
-      "name": "protoc-gen-go-aip-x86_64-linux",
-      "browser_download_url": "https://github.com/protoc-contrib/protoc-gen-go-aip/releases/download/v0.2.0/protoc-gen-go-aip-x86_64-linux",
+      "name": "example-app-x86_64-linux",
+      "browser_download_url": "https://github.com/example/example-app/releases/download/v0.2.0/example-app-x86_64-linux",
       "digest": "sha256:66d3a44ea474c74313e1a4f52cb7ae80c941029fbc25c7c1c6b62740da5bfc4a"
     },
     {
       "name": "checksums.txt",
-      "browser_download_url": "https://github.com/protoc-contrib/protoc-gen-go-aip/releases/download/v0.2.0/checksums.txt",
+      "browser_download_url": "https://github.com/example/example-app/releases/download/v0.2.0/checksums.txt",
       "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   ]

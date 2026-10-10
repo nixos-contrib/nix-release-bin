@@ -3,7 +3,7 @@
 # lib.mkReleaseBinary reads, so a flake can install them instead of building
 # from source.
 #
-# Every asset whose name ends in a Nix system, as protoc-gen-foo-x86_64-linux
+# Every asset whose name ends in a Nix system, as example-app-x86_64-linux
 # does, is written with its download URL and the SHA-256 digest GitHub
 # recorded on upload, so nothing is downloaded. Other assets, such as
 # checksums or archives, are skipped.

@@ -30,8 +30,8 @@ jobs:
       - name: Run actionlint
         run: nix develop --command actionlint
 
-  # Checks fetch and run the release binary tests/fixture/lock.json pins for
-  # each of these systems.
+  # Checks fetch and run the release binary that
+  # tests/fixture/protoc-gen-go-aip.json pins for each of these systems.
   test:
     strategy:
       fail-fast: false
@@ -53,8 +53,8 @@ jobs:
         run: nix flake check -L
 
   # Runs the action itself, as a caller would -- with the runner's own tools
-  # rather than the dev shell -- against the release tests/fixture/lock.json
-  # pins.
+  # rather than the dev shell -- against the real release that
+  # tests/fixture/protoc-gen-go-aip.json pins.
   action:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -77,7 +77,7 @@ jobs:
         run: |
           test "$UPDATED" = true
           test "$VERSION" = 0.2.0
-          diff tests/fixture/lock.json "$RUNNER_TEMP/nix/release.json"
+          diff tests/fixture/protoc-gen-go-aip.json "$RUNNER_TEMP/nix/release.json"
 
   release:
     needs: [lint, test, action]
