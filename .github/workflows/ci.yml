@@ -70,14 +70,14 @@ jobs:
           repository: protoc-contrib/protoc-gen-go-aip
           working-directory: ${{ runner.temp }}
 
-      - name: Check the lock file
+      - name: Check the manifest
         env:
           UPDATED: ${{ steps.pin.outputs.updated }}
           VERSION: ${{ steps.pin.outputs.version }}
         run: |
           test "$UPDATED" = true
           test "$VERSION" = 0.2.0
-          diff tests/fixture/protoc-gen-go-aip.json "$RUNNER_TEMP/.nix-release-bin.json"
+          diff tests/fixture/protoc-gen-go-aip.json "$RUNNER_TEMP/.nix-release-bin-manifest.json"
 
   release:
     needs: [lint, test, action]

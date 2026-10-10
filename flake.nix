@@ -21,11 +21,11 @@
         pkgs = nixpkgs.legacyPackages.${system};
         mkReleaseBin = import ./lib.nix;
         # A real release, which the binary check fetches.
-        lock = ./tests/fixture/protoc-gen-go-aip.json;
+        manifest = ./tests/fixture/protoc-gen-go-aip.json;
         fallback = pkgs.writeShellScriptBin "fallback" "" // {
           meta.description = "fallback";
         };
-        pinned = builtins.hasAttr system (builtins.fromJSON (builtins.readFile lock)).assets;
+        pinned = builtins.hasAttr system (builtins.fromJSON (builtins.readFile manifest)).assets;
 
         failures = pkgs.lib.runTests {
           testFallsBackWithoutABinary = {
@@ -33,7 +33,7 @@
               (mkReleaseBin {
                 inherit pkgs fallback;
                 pname = "example-app";
-                lock = {
+                manifest = {
                   version = "1.0.0";
                   assets = { };
                 };
@@ -46,7 +46,7 @@
                 (mkReleaseBin {
                   inherit pkgs;
                   pname = "example-app";
-                  lock = {
+                  manifest = {
                     version = "1.0.0";
                     assets = { };
                   };
@@ -60,7 +60,7 @@
                 binary = mkReleaseBin {
                   inherit pkgs fallback;
                   pname = "example-app";
-                  lock = {
+                  manifest = {
                     version = "1.0.0";
                     assets.${system} = {
                       url = "https://example.com/example-app-${system}";
@@ -97,7 +97,7 @@
           binary =
             let
               binary = mkReleaseBin {
-                inherit pkgs lock;
+                inherit pkgs manifest;
                 pname = "protoc-gen-go-aip";
               };
             in

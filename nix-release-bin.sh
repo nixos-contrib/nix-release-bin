@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pins the binaries a GitHub release published in the lock file
+# Pins the binaries a GitHub release published in the manifest
 # lib.mkReleaseBin reads, so a flake can install them instead of building
 # from source.
 #
@@ -12,16 +12,16 @@
 # which GitHub-hosted runners carry.
 #
 # Environment:
-#   TAG         Tag of the release. Its version is the tag without a leading "v".
-#   REPOSITORY  owner/name of the repository that published the release.
-#   LOCK_FILE   Path of the lock file to write.
-#   GH_TOKEN    Token to read the release with.
+#   TAG            Tag of the release. Its version is the tag without a leading "v".
+#   REPOSITORY     owner/name of the repository that published the release.
+#   MANIFEST_FILE  Path of the manifest to write.
+#   GH_TOKEN       Token to read the release with.
 
 set -euo pipefail
 
 : "${TAG:?TAG must name the release}"
 : "${REPOSITORY:?REPOSITORY must name the repository, as owner/name}"
-LOCK_FILE=${LOCK_FILE:-.nix-release-bin.json}
+MANIFEST_FILE=${MANIFEST_FILE:-.nix-release-bin-manifest.json}
 
 # The systems Nix builds for that release binaries are published for.
 SYSTEM='-(?<system>(aarch64|x86_64|i686|armv6l|armv7l|riscv64|powerpc64le)-(linux|darwin))$'
@@ -40,9 +40,9 @@ if [ -z "$assets" ]; then
   exit 1
 fi
 
-lock=$(jq -n --arg version "${TAG#v}" '{version: $version, assets: {}}')
+manifest=$(jq -n --arg version "${TAG#v}" '{version: $version, assets: {}}')
 while IFS="$(printf '\t')" read -r system name url digest; do
-  if printf '%s' "$lock" | jq -e --arg system "$system" '.assets | has($system)' >/dev/null; then
+  if printf '%s' "$manifest" | jq -e --arg system "$system" '.assets | has($system)' >/dev/null; then
     echo "::error::Release $TAG has more than one binary for $system, so it is unclear which to pin."
     exit 1
   fi
@@ -55,8 +55,8 @@ while IFS="$(printf '\t')" read -r system name url digest; do
   esac
 
   hash="sha256-$(perl -e 'print pack("H*", $ARGV[0])' "${digest#sha256:}" | base64)"
-  lock=$(
-    printf '%s' "$lock" |
+  manifest=$(
+    printf '%s' "$manifest" |
       jq --arg system "$system" --arg url "$url" --arg hash "$hash" '.assets[$system] = {url: $url, hash: $hash}'
   )
   echo "Pinned $name for $system."
@@ -64,11 +64,11 @@ done <<EOF
 $assets
 EOF
 
-mkdir -p "$(dirname "$LOCK_FILE")"
-previous=$(cat "$LOCK_FILE" 2>/dev/null || true)
-printf '%s' "$lock" | jq --sort-keys . >"$LOCK_FILE"
+mkdir -p "$(dirname "$MANIFEST_FILE")"
+previous=$(cat "$MANIFEST_FILE" 2>/dev/null || true)
+printf '%s' "$manifest" | jq --sort-keys . >"$MANIFEST_FILE"
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
-  echo "updated=$([ "$previous" != "$(cat "$LOCK_FILE")" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
+  echo "updated=$([ "$previous" != "$(cat "$MANIFEST_FILE")" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
   echo "version=${TAG#v}" >>"$GITHUB_OUTPUT"
 fi

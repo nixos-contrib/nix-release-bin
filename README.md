@@ -14,13 +14,13 @@ on every release. This repository does both halves:
 
 - **`lib.mkReleaseBin`** packages the pinned binary for the host system, or
   returns the fallback where the release has none.
-- **The action** writes the lock file it reads, after a release is published.
+- **The action** writes the manifest it reads, after a release is published.
 
 ## How it works
 
 The action reads the release from the GitHub API. Every asset whose name ends
 in a Nix system, such as `example-app-x86_64-linux` or
-`example-app-aarch64-darwin`, is written to the lock file with its download
+`example-app-aarch64-darwin`, is written to the manifest with its download
 URL and the SHA-256 digest GitHub recorded when it was uploaded, so nothing is
 downloaded. Other assets, such as checksums or archives, are skipped.
 
@@ -36,7 +36,7 @@ downloaded. Other assets, such as checksums or archives, are skipped.
 }
 ```
 
-The lock file is committed after the release, so it names the latest release,
+The manifest is committed after the release, so it names the latest release,
 not the commit it sits in. A commit built from source can be ahead of it; the
 pinned binary never is.
 
@@ -76,7 +76,7 @@ libraries, as Go and Rust binaries for Linux and macOS usually are.
         packages = {
           default = nix-release-bin.lib.mkReleaseBin {
             inherit pkgs;
-            lock = ./.nix-release-bin.json;
+            manifest = ./.nix-release-bin-manifest.json;
             pname = "example-app";
             fallback = source;
           };
@@ -90,7 +90,7 @@ libraries, as Go and Rust binaries for Linux and macOS usually are.
 | Argument | Default | Description |
 |---|---|---|
 | `pkgs` | | Nixpkgs for the host system. |
-| `lock` | | Path of the lock file, or its contents as an attribute set. |
+| `manifest` | | Path of the manifest, or its contents as an attribute set. |
 | `pname` | | Name of the package, and of the program it installs. |
 | `fallback` | `null` | Package to use where the release has no binary. Without one, evaluating the package there fails. |
 | `meta` | `fallback.meta` | Meta attributes. `mainProgram`, `platforms` and `sourceProvenance` are set from the binary. |
@@ -101,7 +101,7 @@ workflow packages the previous release's binaries again.
 ### The workflow
 
 Run the action once the release has its binaries, and open a pull request with
-the lock file:
+the manifest:
 
 ```yaml
   pin:
@@ -150,8 +150,8 @@ personal access token.
 |---|---|---|
 | `tag` | | Tag of the release. Its version is the tag without a leading `v`. |
 | `repository` | `${{ github.repository }}` | `owner/name` of the repository that published the release. |
-| `lock-file` | `.nix-release-bin.json` | Path of the lock file to write, relative to `working-directory`. |
-| `working-directory` | `.` | Directory the lock file path is relative to. |
+| `manifest-file` | `.nix-release-bin-manifest.json` | Path of the manifest to write, relative to `working-directory`. |
+| `working-directory` | `.` | Directory the manifest path is relative to. |
 | `token` | `${{ github.token }}` | Token to read the release with. |
 
 The action uses `gh`, `jq` and `perl`, which GitHub-hosted runners already
@@ -161,8 +161,8 @@ have. It needs no Nix.
 
 | Name | Description |
 |---|---|
-| `updated` | `true` when the lock file changed, otherwise `false`. |
-| `version` | Version written in the lock file. |
+| `updated` | `true` when the manifest changed, otherwise `false`. |
+| `version` | Version written in the manifest. |
 
 ## Development
 

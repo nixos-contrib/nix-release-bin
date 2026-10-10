@@ -1,6 +1,6 @@
 name: Pin Nix Release Binaries
 description: >-
-  Pin the binaries a GitHub release published in a lock file, so a flake
+  Pin the binaries a GitHub release published in a manifest, so a flake
   installs them with lib.mkReleaseBin instead of building from source.
 author: nixos-contrib
 
@@ -15,11 +15,11 @@ inputs:
   repository:
     description: owner/name of the repository that published the release.
     default: ${{ github.repository }}
-  lock-file:
-    description: Path of the lock file to write, relative to working-directory.
-    default: .nix-release-bin.json
+  manifest-file:
+    description: Path of the manifest to write, relative to working-directory.
+    default: .nix-release-bin-manifest.json
   working-directory:
-    description: Directory the lock file path is relative to.
+    description: Directory the manifest path is relative to.
     default: .
   token:
     description: Token to read the release with.
@@ -27,10 +27,10 @@ inputs:
 
 outputs:
   updated:
-    description: '"true" when the lock file changed, otherwise "false".'
+    description: '"true" when the manifest changed, otherwise "false".'
     value: ${{ steps.pin.outputs.updated }}
   version:
-    description: Version written in the lock file.
+    description: Version written in the manifest.
     value: ${{ steps.pin.outputs.version }}
 
 runs:
@@ -43,6 +43,6 @@ runs:
       env:
         TAG: ${{ inputs.tag }}
         REPOSITORY: ${{ inputs.repository }}
-        LOCK_FILE: ${{ inputs.lock-file }}
+        MANIFEST_FILE: ${{ inputs.manifest-file }}
         GH_TOKEN: ${{ inputs.token }}
       run: "$GITHUB_ACTION_PATH/nix-release-bin.sh"

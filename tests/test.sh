@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs nix-release-bin.sh against tests/fixture/release.json, served by a
-# gh stub, and checks the lock file it wrote.
+# gh stub, and checks the manifest it wrote.
 #
 # Usage: tests/test.sh [test_name...]
 
@@ -22,7 +22,7 @@ EOF
   chmod +x "$scratch/$name/bin/gh"
 }
 
-# Changes into an empty directory to write the lock file in, with gh serving
+# Changes into an empty directory to write the manifest in, with gh serving
 # the given release.
 setup() {
   release=${1:-$fixture/release.json}
@@ -75,24 +75,24 @@ test_pins_the_release_binaries() {
   setup
   run
   expect "success" test "$status" -eq 0
-  expect "the fixture lock" diff "$fixture/lock.json" .nix-release-bin.json
+  expect "the fixture manifest" diff "$fixture/manifest.json" .nix-release-bin-manifest.json
   expect "updated=true" test "$(output_of updated)" = true
   expect "version=0.2.0" test "$(output_of version)" = 0.2.0
 }
 
-test_leaves_a_current_lock_alone() {
+test_leaves_a_current_manifest_alone() {
   setup
-  cp "$fixture/lock.json" .nix-release-bin.json
+  cp "$fixture/manifest.json" .nix-release-bin-manifest.json
   run
   expect "success" test "$status" -eq 0
   expect "updated=false" test "$(output_of updated)" = false
 }
 
-test_writes_the_given_lock_file() {
+test_writes_the_given_manifest() {
   setup
-  run LOCK_FILE=release.lock.json
+  run MANIFEST_FILE=release.manifest.json
   expect "success" test "$status" -eq 0
-  expect "the fixture lock" diff "$fixture/lock.json" release.lock.json
+  expect "the fixture manifest" diff "$fixture/manifest.json" release.manifest.json
 }
 
 test_fails_without_a_binary() {
@@ -100,7 +100,7 @@ test_fails_without_a_binary() {
   run
   expect "failure" test "$status" -ne 0
   expect "the reason" contains "$log" "no asset whose name ends in a system"
-  expect "no lock file" test ! -e .nix-release-bin.json
+  expect "no manifest" test ! -e .nix-release-bin-manifest.json
 }
 
 test_fails_without_a_digest() {
@@ -108,7 +108,7 @@ test_fails_without_a_digest() {
   run
   expect "failure" test "$status" -ne 0
   expect "the reason" contains "$log" "no SHA-256 digest for example-app-aarch64-darwin"
-  expect "no lock file" test ! -e .nix-release-bin.json
+  expect "no manifest" test ! -e .nix-release-bin-manifest.json
 }
 
 test_fails_on_two_binaries_for_a_system() {
