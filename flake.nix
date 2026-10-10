@@ -78,14 +78,12 @@
               {
                 inherit (binary) name;
                 inherit (binary.meta) description mainProgram platforms;
-                url = builtins.head binary.src.urls;
               };
             expected = {
               name = "example-app-1.0.0";
               description = "fallback";
               mainProgram = "example-app";
               platforms = [ system ];
-              url = "https://example.com/example-app-${system}";
             };
           };
         };
@@ -122,6 +120,7 @@
             bash
             jq
             perl
+            python3
             shellcheck
             actionlint
           ];

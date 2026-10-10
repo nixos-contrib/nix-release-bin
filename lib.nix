@@ -27,7 +27,15 @@ else
   pkgs.stdenv.mkDerivation {
     inherit pname;
     inherit (release) version;
-    src = pkgs.fetchurl { inherit (asset) url hash; };
+    # A binary Nix built refers to the libraries of the store it was built
+    # in, and when those are in the fetcher's closure too, as they are when
+    # the same nixpkgs installs it, a fixed-output derivation fetching it
+    # fails. The builtin fetcher adds it to the store without building one,
+    # at the cost of downloading it at evaluation.
+    src = builtins.fetchurl {
+      inherit (asset) url;
+      sha256 = asset.hash;
+    };
     dontUnpack = true;
     # A dynamically linked Linux binary Nix built loads the glibc of the store
     # it was built in, which the host's store does not hold, so it is pointed

@@ -52,6 +52,11 @@ and libraries are pointed at the nixpkgs passed in, as nixpkgs does for its
 `-bin` packages. Static binaries, and every macOS binary, are installed as
 published: patching a macOS binary would invalidate its ad-hoc signature.
 
+The binary is downloaded with `builtins.fetchurl`, when the package is
+evaluated rather than built. A binary Nix built refers to the libraries it was
+built with, and when the nixpkgs installing it holds the same ones, a
+fixed-output derivation such as `pkgs.fetchurl` refuses to download it.
+
 ## Usage
 
 ### The flake
@@ -174,7 +179,8 @@ The dev shell carries the tools CI uses. Enter it with `nix develop`, or open
 the repository in its devcontainer, which installs Nix.
 
 `tests/test.sh` runs the script against `tests/fixture/release.json`, served
-by a `gh` stub. The flake checks test `lib.nix`, and fetch and run the
+by a `gh` stub, and installs a binary built with the flake's own nixpkgs,
+served over HTTP, through `lib.nix`. The flake checks test `lib.nix`, and fetch and run the
 binaries of two real releases for the host system: one static, pinned in
 `tests/fixture/protoc-gen-go-aip.json`, and one dynamically linked, pinned in
 `tests/fixture/protoc-gen-rust-aip.json`:
